@@ -16,138 +16,126 @@ h1 {
   text-align:center;
 }
 
+.sheet {
+  background:#fff;
+  padding:10px;
+  border:1px solid #000;
+}
+
 table {
   width:100%;
-  border-collapse: collapse;
-  background:#fff;
+  border-collapse:collapse;
+  font-size:12px;
 }
 
 th, td {
   border:1px solid #000;
   padding:5px;
-  font-size:12px;
-  text-align:center;
 }
 
 input, select {
   width:100%;
   border:none;
-  text-align:center;
+  font-size:12px;
 }
 
 .total {
-  font-size:18px;
-  font-weight:bold;
   text-align:right;
+  font-size:18px;
   margin-top:10px;
-}
-
-button {
-  width:100%;
-  padding:10px;
-  margin-top:10px;
-  font-size:16px;
 }
 </style>
 
 </head>
+
 <body>
 
 <h1>御見積書</h1>
 
+<div class="sheet">
+
 <table>
-  <tr>
-    <th>No</th>
-    <th>作業内容</th>
-    <th>区分</th>
-    <th>数量</th>
-    <th>単価</th>
-    <th>金額</th>
-  </tr>
-
-  <!-- 1行目 -->
-  <tr>
-    <td>1</td>
-    <td><input type="text"></td>
-    <td>
-      <select>
-        <option>分解</option>
-        <option>交換</option>
-        <option>点検</option>
-        <option>補充</option>
-        <option>脱着</option>
-        <option>塗装</option>
-      </select>
-    </td>
-    <td><input type="number" oninput="calc()"></td>
-    <td><input type="number" oninput="calc()"></td>
-    <td class="price">0</td>
-  </tr>
-
-  <!-- 2行目 -->
-  <tr>
-    <td>2</td>
-    <td><input type="text"></td>
-    <td>
-      <select>
-        <option>分解</option>
-        <option>交換</option>
-        <option>点検</option>
-        <option>補充</option>
-        <option>脱着</option>
-        <option>塗装</option>
-      </select>
-    </td>
-    <td><input type="number" oninput="calc()"></td>
-    <td><input type="number" oninput="calc()"></td>
-    <td class="price">0</td>
-  </tr>
-
-  <!-- 3行目 -->
-  <tr>
-    <td>3</td>
-    <td><input type="text"></td>
-    <td>
-      <select>
-        <option>分解</option>
-        <option>交換</option>
-        <option>点検</option>
-        <option>補充</option>
-        <option>脱着</option>
-        <option>塗装</option>
-      </select>
-    </td>
-    <td><input type="number" oninput="calc()"></td>
-    <td><input type="number" oninput="calc()"></td>
-    <td class="price">0</td>
-  </tr>
-
+<tr>
+  <td>顧客名</td>
+  <td><input></td>
+  <td>車種</td>
+  <td><input></td>
+</tr>
+<tr>
+  <td>住所</td>
+  <td colspan="3"><input></td>
+</tr>
 </table>
 
-<div class="total">合計: <span id="total">0</span> 円</div>
+<br>
 
-<button onclick="window.print()">印刷 / PDF保存</button>
+<table id="table">
+<tr>
+  <th>No</th>
+  <th>区分</th>
+  <th>作業内容</th>
+  <th>数量</th>
+  <th>単価</th>
+  <th>金額</th>
+</tr>
+</table>
+
+<button onclick="addRow()">行追加</button>
+
+<div class="total">
+合計：<span id="total">0</span> 円
+</div>
+
+</div>
 
 <script>
-function calc(){
-  let rows = document.querySelectorAll("table tr");
-  let total = 0;
 
-  rows.forEach((row, i)=>{
-    if(i===0) return;
+function addRow(){
+  const table = document.getElementById("table");
+  const row = table.insertRow();
 
-    let inputs = row.querySelectorAll("input");
-    let qty = Number(inputs[1].value);
-    let price = Number(inputs[2].value);
-
-    let sum = qty * price;
-    row.querySelector(".price").innerText = sum;
-
-    total += sum;
-  });
-
-  document.getElementById("total").innerText = total;
+  row.innerHTML = `
+    <td>${table.rows.length - 1}</td>
+    <td>
+      <select>
+        <option>分解</option>
+        <option>交換</option>
+        <option>点検</option>
+        <option>補充</option>
+        <option>脱着</option>
+        <option>塗装</option>
+      </select>
+    </td>
+    <td><input></td>
+    <td><input type="number" oninput="calc(this)"></td>
+    <td><input type="number" oninput="calc(this)"></td>
+    <td><input readonly></td>
+  `;
 }
+
+function calc(el){
+  const row = el.parentNode.parentNode;
+  const qty = row.cells[3].children[0].value;
+  const price = row.cells[4].children[0].value;
+  const total = qty * price || 0;
+
+  row.cells[5].children[0].value = total;
+
+  calcTotal();
+}
+
+function calcTotal(){
+  const table = document.getElementById("table");
+  let sum = 0;
+
+  for(let i=1; i<table.rows.length; i++){
+    const val = table.rows[i].cells[5].children[0].value;
+    sum += Number(val) || 0;
+  }
+
+  document.getElementById("total").innerText = sum;
+}
+
 </script>
 
 </body>
