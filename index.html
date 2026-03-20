@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メグミ車体 見積アプリ</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+body { font-family: sans-serif; background:#f2f2f2; padding:10px; }
+.card { background:#fff; padding:10px; margin-bottom:10px; border-radius:10px; }
+button { width:100%; padding:12px; margin-top:5px; }
+input { width:100%; margin-top:5px; }
+.total { font-size:20px; text-align:center; margin-top:10px; }
+</style>
+</head>
+
+<body>
+
+<h2>メグミ車体 見積</h2>
+
+<div class="card">
+<input id="customerName" placeholder="顧客名">
+<input id="carName" placeholder="車名">
+<input id="number" placeholder="ナンバー">
+<input id="companyAddress" placeholder="住所">
+</div>
+
+<div class="card">
+<h3>写真</h3>
+<input type="file" multiple accept="image/*" onchange="loadPhotos(event)">
+<div id="preview"></div>
+</div>
+
+<div class="card">
+<h3>テンプレ</h3>
+<button onclick="applyTemplate('door')">ドア塗装</button>
+<button onclick="applyTemplate('bumper')">バンパー塗装</button>
+</div>
+
+<div class="card">
+<h3>塗装 工賃</h3>
+<input id="base" placeholder="下地">
+<input id="paint" placeholder="塗装">
+<input id="clear" placeholder="クリア">
+<input id="blend" placeholder="ぼかし">
+<input id="polish" placeholder="磨き">
+<input id="remove" placeholder="脱着">
+</div>
+
+<div class="card">
+<h3>材料費</h3>
+<input id="mat1" placeholder="塗料">
+<input id="mat2" placeholder="クリア材">
+<input id="mat3" placeholder="シンナー">
+<input id="mat4" placeholder="パテ">
+</div>
+
+<button onclick="calculate()">計算</button>
+<button onclick="generatePDF()">PDF</button>
+<button onclick="saveData()">保存</button>
+
+<div id="result"></div>
+<div class="total" id="total">合計：0円</div>
+
+<script>
+
+let photos = [];
+
+function loadPhotos(e){
+  photos = [];
+  let preview = document.getElementById("preview");
+  preview.innerHTML = "";
+
+  [...e.target.files].forEach(file=>{
+    let reader = new FileReader();
+    reader.onload = function(ev){
+      photos.push(ev.target.result);
+      let img = document.createElement("img");
+      img.src = ev.target.result;
+      img.style.width="30%";
+      preview.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+const templates = {
+  door:{
+    base:8000, paint:20000, clear:6000,
+    blend:10000, polish:5000, remove:8000,
+    mat1:12000, mat2:5000, mat3:3000, mat4:2000
+  },
+  bumper:{
+    base:6000, paint:15000, clear:5000,
+    blend:8000, polish:4000, remove:5000,
+    mat1:10000, mat2:4000, mat3:2500, mat4:1500
+  }
+};
+
+function applyTemplate(t){
+  let d = templates[t];
+  base.value=d.base;
+  paint.value=d.paint;
+  clear.value=d.clear;
+  blend.value=d.blend;
+  polish.value=d.polish;
+  remove.value=d.remove;
+  mat1.value=d.mat1;
+  mat2.value=d.mat2;
+  mat3.value=d.mat3;
+  mat4.value=d.mat4;
+  calculate();
+}
+
+function val(id){ return parseInt(document.getElementById(id).value)||0; }
+
+function calculate(){
+  let labor = val("base")+val("paint")+val("clear")+val("blend")+val("polish")+val("remove");
+  let mat = val("mat1")+val("mat2")+val("mat3")+val("mat4");
+
+  let total = labor+mat;
+
+  document.getElementById("result").innerText =
+  "工賃："+labor+"円\n材料："+mat+"円";
+
+  document.getElementById("total").innerText = "合計："+total+"円";
+}
+
+function generatePDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  doc.text("メグミ車体",10,10);
+  doc.text(companyAddress.value,10,16);
+
+  doc.text("見積書",150,10);
+
+  doc.text(result.innerText,10,30);
+  doc.text(total.innerText,10,50);
+
+  if(photos.length){
+    doc.addPage();
+    photos.forEach((p,i)=>{
+      doc.addImage(p,"JPEG",10,10+60*i,80,50);
+    });
+  }
+
+  doc.save("estimate.pdf");
+}
+
+function saveData(){
+  let data={
+    name:customerName.value,
+    total:total.innerText
+  };
+
+  let list=JSON.parse(localStorage.getItem("data")||"[]");
+  list.push(data);
+  localStorage.setItem("data",JSON.stringify(list));
+
+  alert("保存OK");
+}
+
+</script>
+
+</body>
+</html>
